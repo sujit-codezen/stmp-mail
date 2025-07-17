@@ -33,6 +33,10 @@ def access_whitelist_required(f):
 @app.route('/send-email', methods=['POST'])
 @access_whitelist_required
 def send_email_route():
+    client_ip = request.remote_addr
+    origin = request.headers.get("Origin")
+    referer = request.headers.get("Referer", "")
+    return jsonify({"client_ip": client_ip, "origin": origin, "referer":referer}), 200
     data = request.get_json()
 
     to = data.get('to')
