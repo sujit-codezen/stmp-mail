@@ -16,9 +16,7 @@ def access_whitelist_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         client_ip = request.remote_addr
-        origin = request.headers.get("Origin") or request.headers.get("Referer", "")
-        print(f"Client IP: {client_ip}")
-        print(f"Origin/Referer: {origin}")
+        origin = request.headers.get("Origin")
 
         if client_ip in ALLOWED_IPS:
             return f(*args, **kwargs)
@@ -31,12 +29,8 @@ def access_whitelist_required(f):
     return decorated_function
 
 @app.route('/send-email', methods=['POST'])
-# @access_whitelist_required
+@access_whitelist_required
 def send_email_route():
-    client_ip = request.remote_addr
-    origin = request.headers.get("Origin")
-    referer = request.headers.get("Referer", "")
-    return jsonify({"client_ip": client_ip, "origin": origin, "referer":referer}), 200
     data = request.get_json()
 
     to = data.get('to')
