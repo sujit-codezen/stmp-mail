@@ -31,7 +31,7 @@ def access_whitelist_required(f):
     return decorated_function
 
 @app.route('/send-email', methods=['POST'])
-@access_whitelist_required
+# @access_whitelist_required
 def send_email_route():
     client_ip = request.remote_addr
     origin = request.headers.get("Origin")
