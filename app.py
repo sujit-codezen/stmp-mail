@@ -5,23 +5,33 @@ import os
 
 app = Flask(__name__)
 
-# Load allowed IPs from .env and create a set
+# Load allowed IPs and domains from environment variables
 allowed_ips_env = os.getenv("ALLOWED_IPS", "")
-ALLOWED_IPS = set(ip.strip() for ip in allowed_ips_env.split(",") if ip.strip())
+allowed_domains_env = os.getenv("ALLOWED_DOMAINS", "")
 
-def ip_whitelist_required(f):
+ALLOWED_IPS = set(ip.strip() for ip in allowed_ips_env.split(",") if ip.strip())
+ALLOWED_DOMAINS = set(domain.strip() for domain in allowed_domains_env.split(",") if domain.strip())
+
+def access_whitelist_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # If behind proxy, you might want to check 'X-Forwarded-For'
         client_ip = request.remote_addr
+        origin = request.headers.get("Origin") or request.headers.get("Referer", "")
         print(f"Client IP: {client_ip}")
-        if client_ip not in ALLOWED_IPS:
-            return jsonify({"error": "Access denied: Your IP is not allowed"}), 403
-        return f(*args, **kwargs)
+        print(f"Origin/Referer: {origin}")
+
+        if client_ip in ALLOWED_IPS:
+            return f(*args, **kwargs)
+
+        if any(domain in origin for domain in ALLOWED_DOMAINS):
+            return f(*args, **kwargs)
+
+        return jsonify({"error": "Access denied: Your IP or domain is not allowed"}), 403
+
     return decorated_function
 
 @app.route('/send-email', methods=['POST'])
-@ip_whitelist_required
+@access_whitelist_required
 def send_email_route():
     data = request.get_json()
 
